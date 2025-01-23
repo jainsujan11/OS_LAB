@@ -36,7 +36,6 @@ queue ready_queue;
 
 typedef struct{
     int H[1024];
-    int size;
 }heap;
 heap event_queue;
 
@@ -44,7 +43,8 @@ int comp1(int a,int b)
 {
     if(infotable[a].next_time == infotable[b].next_time)
     {
-        if(((infotable[a].state == NEW_ARRIVAL || infotable[a].state == IO_COMPLETE) && (infotable[b].state == TIME_OUT || infotable[b].state == BURST_END)))
+        if(((infotable[a].state == NEW_ARRIVAL || infotable[a].state == IO_COMPLETE) && 
+        (infotable[b].state == TIME_OUT || infotable[b].state == BURST_END)))
         {
             return 1;
         }
@@ -77,13 +77,9 @@ void shiftDown(int H[],int n) {
         n = child;
     }
 }
-
-
-
-
 void readfile()
 {
-    FILE* file = fopen("input.txt", "r");
+    FILE* file = fopen("proc.txt", "r");
     char line[256];
     fgets(line, sizeof(line), file);
     n = atoi(line);
@@ -113,7 +109,6 @@ void readfile()
     }
     fclose(file);
 }
-
 void init()
 {
     
@@ -122,8 +117,6 @@ void init()
         Insert(event_queue.H, i);
     }
 }
-
-
 void handle(int cur)
 {
     pcb* cur_pcb = &infotable[cur];
@@ -190,7 +183,9 @@ void round_robin(int q)
     readfile();
     ready_queue = initq();  
     init();
+    #ifdef VERBOSE
     printf("%-10d : Starting\n",0);
+    #endif
     while(size)
     {
         int cur_event = getMin(event_queue.H);
@@ -246,7 +241,7 @@ void round_robin(int q)
     printf("CPU idle time = %d\n", idle_time);
     printf("CPU utilization = %.2f%%\n", cpu_util);
 
-    // free memory
+    // free memory and reset global variables
     free(infotable);
     size = 0;
     free_time = 0;

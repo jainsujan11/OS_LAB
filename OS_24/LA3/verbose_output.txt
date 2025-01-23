@@ -331,8 +331,8 @@
 4085      : Process 14 joins ready queue after IO completion
 4085      : Process 14 is scheduled to run for time 12
 4097      : Process 17 joins ready queue after IO completion
-4097      : Process     14 exits. Turnaround time = 1099 (101%), Wait time = 13
 4097      : Process 17 is scheduled to run for time 9
+4097      : Process     14 exits. Turnaround time = 1099 (101%), Wait time = 13
 4102      : Process 18 joins ready queue after IO completion
 4106      : Process 18 is scheduled to run for time 8
 4114      : CPU goes idle

@@ -9,4 +9,4 @@ vrun: vcompile
 db: genproc.c
 	gcc -Wall -o genproc genproc.c
 clean:
-	-rm -f genproc schedule proc.txt
+	-rm -f genproc schedule proc.txt myoutput.txt myverboseoutput.txt
