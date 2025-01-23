@@ -1,0 +1,25 @@
+DISCRETE EVENT SIMULATION
+
+maintain ready queue -- stores waiting process RQ [ready queue] {queue of indices to the info table}
+
+maitain event queue EQ --> future events [priority queue] {queue of indices to the info table}
+
+classify events --> 2  {arrival 
+                            -- new arrival                                         -| put at end of ready queue 
+                            -- after IO completion -- not known at the beginning   -|   
+                            
+                        CPU DONE 
+                            -- BURST END [ADD at back of EQ]
+                            -- TIMEOUT [remainig burst needs to be executed], [put at the end of ready queue]}
+
+
+while (! EQ.empty())
+{
+    handle next event;
+    if (CPU is free && RQ is not empty)
+    {
+        pick front of RQ {RBT <= q -- ADD BURST-END event at end of EQ {cur_time + RBT}
+                          RBT >  q -- ADD TIMEOUT event at end of EQ {cur_time + q}
+                            }
+    }
+}
