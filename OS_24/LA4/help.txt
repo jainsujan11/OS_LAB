@@ -1,0 +1,17 @@
+user --> coord <--> blocks
+
+coord process creates 9 diff block process, also we have to create 9 different pipes 
+-- when somebody enters a block and enters a digit, check the 3 constraints
+    1) first check the block info
+    2) then check the row of current block, row coordination
+    3) then check the column of current block, column coordination
+
+-- now how to this inter block coordination? we have to use pipes 
+-- sometimes coord process has to use stdin for input or sometimes file descriptor
+-- block process{
+    close(stdin);
+    and then dup();
+}
+
+-- 9 individual terminals
+-- use only printf and scanf 
