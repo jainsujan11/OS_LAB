@@ -1,0 +1,90 @@
+10 tables 
+2 cooks and 5 waiters 
+customer consisting of 1-4 individuals 
+
+(wait)   willing to place order 
+customer --------------------> waiters --------> send the order to cooks
+(wait for
+server)                                 <-------- order is ready take it
+
+customer wait on two things 
+
+
+take 256 semaphores for customers
+take 5 semaphores for waiters, one for each waiter 
+cooks --> 1 semaphores 
+
+
+customer.txt
+
+arrival time 1 min
+
+id      arrival time        no. 
+sorted by ids 
+
+
+                                     
+5 mins per person -- max 20 mins
+30 min for customer eating
+
+
+dont start simulation at 11 am and end at 3 pm 
+
+
+11:10 am cook goes to prepare food for 3 persons 
+11:08 am new customer comes
+11:09 am places order
+
+
+100 ms equivalent to 1 min in real time (this can be changed if things doesnot work)
+
+
+keep track in a shared variable time initialized to zero 
+new customer: 
+        time = arrival time;
+
+eg  customer arrives: 11:10 am
+    usleep(100000);
+    time = earlier_time+1
+
+    cook_cooking 
+    12:34 pm        earlier_time = 94
+    // so 15 min waiting 
+    usleep(15*100000)
+    12:49 pm        time = 94+15 = 109
+
+
+    similarly for customer eating 30 min  
+
+
+how process will communicate 
+
+take shared memory of 2048 ints 
+
+M[0] --> time 
+M[1] --> next waiter
+
+need to maintain 6 queues --> 5 for waiter and 1 for cook 
+
+when a new customer comes it reads M[1] to take next waiter 
+new customer 
+    also store front and back 
+    enqueue(cust_id,cust_cnt) 
+    id,cnt,id,cnt,id,cnt --> implement a sliding queue keep 200 ints for each queue
+
+
+before cooks queue maintain 2 variable
+food ready, place order 
+
+also store front and back for cooks queue
+for a cook queue 
+    enqueue(wait_id,cust_id,cust_cnt)
+    waiter_id,cust_id,cust_cnt,waiter_id,cust_id,cust_cnt,waiter_id,cust_id,cust_cnt like it 
+
+
+in first terminal run cook 
+in second terminal run waiter 
+in third terminal run customers 
+
+
+every parent process will run 
