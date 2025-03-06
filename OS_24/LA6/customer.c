@@ -21,22 +21,6 @@ int customer[256], waiter[5], cook, mutex;
 int *M;
 
 
-void signal_handler(int signo) {
-	int shmkey = ftok("/",65);
-    int shmid = shmget(shmkey, 2048*sizeof(int), 0777);
-	shmdt(M);
-	shmctl(shmid, IPC_RMID, 0);
-	for (int i = 0; i < 256; i++)
-	{
-		semctl(customer[i], 0, IPC_RMID,0);
-	}
-	for (int i = 0; i < 5; i++)
-	{
-		semctl(waiter[i], 0, IPC_RMID,0);
-	}
-	semctl(cook, 0, IPC_RMID,0);
-	semctl(mutex, 0, IPC_RMID,0);
-}
 int get_st(int i) {return 200*i+100;}
 int front(int i) {return 200*i+102;}
 int rear(int i) {return 200*i+103;}
@@ -48,10 +32,12 @@ void print_time(int add)
     min += add;
     hr += min/60;
     min %= 60;
-    if(hr > 12)
+	if(hr > 12)
     {
         hr -= 12;
-        if(min < 10){printf("[%d:0%d pm]", hr, min);}
+        if(min < 10 && hr < 10){printf("[0%d:0%d pm]", hr, min);}
+        else if(min < 10) {printf("[%d:0%d pm]", hr, min);}
+        else if(hr < 10) {printf("[0%d:%d pm]", hr, min);}
         else printf("[%d:%d pm]", hr, min);
     }
     else if(hr == 12)
@@ -68,10 +54,6 @@ void print_time(int add)
 char get_wt(int i)
 {
 	return (char)(i+'U');
-}
-void handle_error(const char *msg) {
-    perror(msg);
-    exit(EXIT_FAILURE);
 }
 void cmain(int id,int cnt,int arrival)
 {
@@ -126,8 +108,6 @@ void cmain(int id,int cnt,int arrival)
 
 int main(int argc, char const *argv[])
 {
-	signal(SIGINT, signal_handler);
-	signal(SIGSEGV, signal_handler);
     pop.sem_num = vop.sem_num = 0;
 	pop.sem_flg = vop.sem_flg = 0;
 	pop.sem_op = -1 ; vop.sem_op = 1 ;
@@ -136,47 +116,31 @@ int main(int argc, char const *argv[])
     // Attach existing customer semaphores
     for (int i = 0; i < 256; i++) {
         key = ftok("customer.c", i);
-        if (key == -1) handle_error("ftok failed for customer semaphore");
-
         customer[i] = semget(key, 1, 0777);
-        if (customer[i] == -1) handle_error("semget failed for customer semaphore");
     }
 
     // Attach existing waiter semaphores
     for (int i = 0; i < 5; i++) {
         key = ftok("waiter.c", i);
-        if (key == -1) handle_error("ftok failed for waiter semaphore");
-
         waiter[i] = semget(key, 1, 0777);
-        if (waiter[i] == -1) handle_error("semget failed for waiter semaphore");
     }
 
     // Attach existing cook semaphore
     key = ftok("cook.c", 1);
-    if (key == -1) handle_error("ftok failed for cook semaphore");
-
     cook = semget(key, 1, 0777);
-    if (cook == -1) handle_error("semget failed for cook semaphore");
 
     // Attach existing mutex semaphore
     key = ftok("/tmp", 65);
-    if (key == -1) handle_error("ftok failed for mutex semaphore");
-
     mutex = semget(key, 1, 0777);
-    if (mutex == -1) handle_error("semget failed for mutex semaphore");
 
     // Attach shared memory
     key = ftok("/", 65);
-    if (key == -1) handle_error("ftok failed for shared memory");
-
     int shmid = shmget(key, 2048 * sizeof(int), 0777);
-    if (shmid == -1) handle_error("shmget failed for shared memory");
-
-    M = (int *)shmat(shmid, NULL, 0);
-    if (M == (void *)-1) handle_error("shmat failed");
+    M = (int *)shmat(shmid, 0, 0);
 	// read from customer.txt
 	FILE *fp = fopen("customers.txt", "r");
 	int arr[256][3];
+	// storing file in a array, directly not working i dont know why 
 	int ptr = 0;
 	while(1)
 	{
@@ -187,7 +151,6 @@ int main(int argc, char const *argv[])
 		arr[ptr][1] = arr_time;
 		arr[ptr][2] = cnt;
 		ptr++;
-
 	}
 	fclose(fp);
 	int last_time = -1;

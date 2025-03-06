@@ -25,28 +25,8 @@ int customer[256], waiter[5], cook, mutex;
 int *M;
 
 
-void signal_handler(int signo) {
-	int shmkey = ftok("/",65);
-    int shmid = shmget(shmkey, 2048*sizeof(int), 0777);
-	shmdt(M);
-	shmctl(shmid, IPC_RMID, 0);
-	for (int i = 0; i < 256; i++)
-	{
-		semctl(customer[i], 0, IPC_RMID,0);
-	}
-	for (int i = 0; i < 5; i++)
-	{
-		semctl(waiter[i], 0, IPC_RMID,0);
-	}
-	semctl(cook, 0, IPC_RMID,0);
-	semctl(mutex, 0, IPC_RMID,0);
-}
-
-
 void print_time(int add)
 {
-    // initial time is 11:00 am, write code to print the time after 'add' minutes
-    // also primt am/pm
     int hr = 11, min = 0;
     min += add;
     hr += min/60;
@@ -54,7 +34,9 @@ void print_time(int add)
     if(hr > 12)
     {
         hr -= 12;
-        if(min < 10){printf("[%d:0%d pm]", hr, min);}
+        if(min < 10 && hr < 10){printf("[0%d:0%d pm]", hr, min);}
+        else if(min < 10) {printf("[%d:0%d pm]", hr, min);}
+        else if(hr < 10) {printf("[0%d:%d pm]", hr, min);}
         else printf("[%d:%d pm]", hr, min);
     }
     else if(hr == 12)
@@ -132,7 +114,7 @@ void cmain(int cook_id)
             }
             print_time(M[0]);
             print_space(cook_id);
-            printf("Cook %c: leaving\n",'C'+cook_id);
+            printf("Cook %c: Leaving\n",'C'+cook_id);
             V(mutex);
             exit(0);
         }
@@ -147,26 +129,15 @@ void handle_error(const char *msg) {
 
 int main(int argc, char const *argv[])
 {
-    signal(SIGINT, signal_handler);
     pop.sem_num = vop.sem_num = 0;
 	pop.sem_flg = vop.sem_flg = 0;
 	pop.sem_op = -1 ; vop.sem_op = 1 ;
-    // create shared memory segment and semaphore
-    // create 256 customer semaphores 
-    // create 5 waiter semaphores
-    // create 1 cook semaphore
-    // create 1 mutex semaphore
-    
     key_t key;
     
     // Create customer semaphores
     for (int i = 0; i < 256; i++) {
         key = ftok("customer.c", i);
-        if (key == -1) handle_error("ftok failed for customer semaphore");
-
         customer[i] = semget(key, 1, 0777 | IPC_CREAT);
-        if (customer[i] == -1) handle_error("semget failed for customer semaphore");
-
         if (semctl(customer[i], 0, SETVAL, 0) == -1)
             handle_error("semctl failed for customer semaphore");
     }
@@ -174,45 +145,28 @@ int main(int argc, char const *argv[])
     // Create waiter semaphores
     for (int i = 0; i < 5; i++) {
         key = ftok("waiter.c", i);
-        if (key == -1) handle_error("ftok failed for waiter semaphore");
-
         waiter[i] = semget(key, 1, 0777 | IPC_CREAT);
-        if (waiter[i] == -1) handle_error("semget failed for waiter semaphore");
-
         if (semctl(waiter[i], 0, SETVAL, 0) == -1)
             handle_error("semctl failed for waiter semaphore");
     }
 
     // Create cook semaphore
     key = ftok("cook.c", 1);
-    if (key == -1) handle_error("ftok failed for cook semaphore");
-
     cook = semget(key, 1, 0777 | IPC_CREAT);
-    if (cook == -1) handle_error("semget failed for cook semaphore");
-
     if (semctl(cook, 0, SETVAL, 0) == -1)
         handle_error("semctl failed for cook semaphore");
 
     // Create mutex semaphore
     key = ftok("/tmp", 65);
-    if (key == -1) handle_error("ftok failed for mutex semaphore");
-
     mutex = semget(key, 1, 0777 | IPC_CREAT);
-    if (mutex == -1) handle_error("semget failed for mutex semaphore");
-
     if (semctl(mutex, 0, SETVAL, 1) == -1)
         handle_error("semctl failed for mutex semaphore");
 
     // Create shared memory
     key = ftok("/", 65);
-    if (key == -1) handle_error("ftok failed for shared memory");
-
     int shmid = shmget(key, 2048 * sizeof(int), 0777 | IPC_CREAT);
-    if (shmid == -1) handle_error("shmget failed for shared memory");
-
     // Attach shared memory
     M = (int *)shmat(shmid, NULL, 0);
-    if (M == (void *)-1) handle_error("shmat failed");
 
     P(mutex);
     M[0] = 0;M[1] = 10;M[2] = 0;M[3] = 0;
