@@ -1,0 +1,67 @@
+m resource types each resources has multiple instance  
+n threads fight over accessing those resources 
+in file sys.txt
+t0 t1 t2 t3 ... t(m-1)
+
+n threads will make request of diff types of resource in random manner 
+thread00.txt
+thread01.txt
+thread02.txt 
+...
+threadn.txt 
+
+in each file specify max need for each m resources 
+mx0 mx1    ...      mx(m-1)
+
+sequence of such lines around (5 - 15)
+
+DELAY R r0 r1 r2 ... r(m-1)     // each rj can 0 , >0 , <0 very intuitive meaning  
+...
+
+
+DELAY Q release all the available resources  
+
+
+if rj <= 0 for all j, then it is a release only request --- non blocking  
+such a request is not very demanding 
+
+if there exist j st rj > 0, then such a request is ADDITIONAL (blocking)
+1) check wheather granting resource can throw system in UNSAFE state  
+
+
+now coming to role of threads 
+
+master thread plays the role of OS (these are not USER LEVEL THREADS) 
+|
+|- userthread0 for thread 0 
+|- ...
+|- userthread(n-1) for thread n-1
+
+masterthreads has duty of granting the resources to threads whenever required 
+
+use a mutex rmtx for mutual exclusion of a shared memory 
+whenever a thread wakes up from delay it will grab the rmtx first, and write the request,
+but it will not release it immediately !!! 
+**only when OS says I have read the request only then release the rmtx
+
+** but how the thread know that ?? A ACK is req {2 WAY HANDSHAKING}
+so here comes the barriers REQB and ACKB {all initialised to 2 ig }
+
+for simplicity we will use n ACKB barriers!! Single should work in theory. Maybe TRY IT !!
+
+masterthread will wait on top of REQB, while the userthread will wait on ACKBi  
+after that a request is served , if it is ADDITIONAL request then we use a conditional wait 
+** A single CV willnot serve the purpose so n CV and n cmtx will be need 
+** store the request in a queue with the thread number
+
+0 - 1 - 2 - 3 - 4    
+
+
+
+the matrices alloc available are only there in scope of master thread, 
+other threads are not even allowed to read them 
+
+At the beginning we need one more barrier to ensure everything is correctly filled 
+
+BOS barrier will initialised to (n+1). n for threads and 1 for master 
+
