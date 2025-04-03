@@ -1,0 +1,21 @@
+extension of previous assg 
+sane data as previous 
+
+1 bit for valid / invalid 
+1 bit for reference bit 
+14 bit for frame number
+
+we will use LRU mechanism for page replacement 
+initially 12288 frames 
+for each frame maintain 3 info (frame_no, page_no, PID)
+eg - for frame 0 (0,p,140)
+
+initially NFF = 12288 
+when number of free frames (NFF) becomes less than (1000 = NFFMIN)
+and a process makes a page fault then we have to perform 
+page replacement algorithm (LRU) 
+
+maintain a bit stream 
+right shift it and add the reference bit 
+
+we also maintain a pool of free frames 
