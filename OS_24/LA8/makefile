@@ -7,6 +7,6 @@ avoid: all
 	./resource_nodeadlock
 db: geninput.c
 	gcc -Wall -o geninput geninput.c
-	./geninput 10 20
+	./geninput 8 12 
 clean:
 	-rm -f resource resource_nodeadlock geninput

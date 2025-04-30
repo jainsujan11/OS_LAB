@@ -24,7 +24,7 @@ struct sembuf pop, vop ;
 int customer[256], waiter[5], cook, mutex;
 int *M;
 
-
+/* --- HELPER FUNCTIONS --- */
 void print_time(int add)
 {
     int hr = 11, min = 0;
@@ -61,6 +61,10 @@ void print_space(int i)
 int get_st(int i) {return 200*i+100;}
 int front(int i) {return 200*i+102;}
 int rear(int i) {return 200*i+103;}
+void handle_error(const char *msg) {
+    perror(msg);
+    exit(EXIT_FAILURE);
+}
 
 void cmain(int cook_id)
 {
@@ -69,6 +73,7 @@ void cmain(int cook_id)
         P(mutex);
         if(M[4] == 1)
         {
+            // denoting last cook leaving so signal all the waiters 
             for (int i = 0; i < 5; i++)
             {
                 V(waiter[i]);
@@ -122,11 +127,6 @@ void cmain(int cook_id)
     }
     exit(0);
 }
-void handle_error(const char *msg) {
-    perror(msg);
-    exit(EXIT_FAILURE);
-}
-
 int main(int argc, char const *argv[])
 {
     pop.sem_num = vop.sem_num = 0;
@@ -169,16 +169,20 @@ int main(int argc, char const *argv[])
     M = (int *)shmat(shmid, NULL, 0);
 
     P(mutex);
+    // M[0] stores time 
+    // M[1] stores number of empty tables 
+    // M[2] next waiter 
     M[0] = 0;M[1] = 10;M[2] = 0;M[3] = 0;
+    // M[4] stores a flag to find out who is last cook 
     M[4] = 0;
     for (int i = 0; i < 5; i++)
     {
-        M[get_st(i)] = 0; // for cook
-        M[get_st(i)+1] = 0; // storing size of queue for cook
+        M[get_st(i)] = 0; // indicate waiter by cook 
+        M[get_st(i)+1] = 0; // storing size of queue for waiter 
         M[front(i)] = front(i)+2;
         M[rear(i)] = front(i);
     }
-    M[CSTART] = 0;
+    M[CSTART] = 0; // size of cooking queue 
     M[CBACK] = 1100;
     M[CFRONT] = 1103;
     V(mutex);

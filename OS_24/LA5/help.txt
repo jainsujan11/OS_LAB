@@ -1,0 +1,14 @@
+there is a shared array M 
+M[0] = 
+M[1] = 0 initially stores how many followers joined so far 
+M[2] = stores whose turn , initially 0
+M[3] = is where leader writes 
+M[4] = F1 and so on 
+
+
+create leaders and followers in two terminals 
+first all followers join the leader, increase M[1] until it becomes equal to n 
+
+now follow a simple process until sum repeats 
+
+when M[2] is -i it means ith follower should terminate

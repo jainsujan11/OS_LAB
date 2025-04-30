@@ -24,15 +24,12 @@ struct sembuf pop, vop ;
 int customer[256], waiter[5], cook, mutex;
 int *M;
 
-
+/* --- HELPER FUNCTIONS --- */
 int get_st(int i) {return 200*i+100;}
 int front(int i) {return 200*i+102;}
 int rear(int i) {return 200*i+103;}
-
 void print_time(int add)
 {
-    // initial time is 11:00 am, write code to print the time after 'add' minutes
-    // also primt am/pm
     int hr = 11, min = 0;
     min += add;
     hr += min/60;
@@ -56,7 +53,6 @@ void print_time(int add)
         else printf("[%d:%d am]", hr, min);
     }
 }
-
 void print_space(int i)
 {
 	if(i == 0) printf(" ");
@@ -72,6 +68,7 @@ void wmain(int waiter_id)
 	{
 		P(waiter[waiter_id]);
 		P(mutex);
+		// end of session condition
 		if(M[0] > 240 && M[get_st(waiter_id)+1] == 0 && M[get_st(waiter_id)] == 0)
 		{
 			print_time(M[0]);
@@ -80,6 +77,7 @@ void wmain(int waiter_id)
 			V(mutex);
 			exit(0);
 		}
+		// denotes some order is ready to be delivered (Cell FR is assg)
 		if(M[get_st(waiter_id)] != 0)
 		{
 			print_time(M[0]);
@@ -89,6 +87,7 @@ void wmain(int waiter_id)
 			M[get_st(waiter_id)] = 0; // indicate that the order has been served
 			V(mutex);
 		}
+		// denotes PO cell in assg
 		else if(M[get_st(waiter_id)+1] != 0)
 		{
 			// read the order from shared memory
@@ -103,8 +102,10 @@ void wmain(int waiter_id)
 			print_space(waiter_id);
 			printf("Waiter %c: Placing order for Customer %d (count = %d)\n", 'U'+waiter_id, cust_id, cnt);
 			V(customer[cust_id]);
+			// removing order fro queue
 			M[front(waiter_id)] += 2;
 			M[get_st(waiter_id)+1]--;
+			// writing order in cooks queue
 			M[CBACK]+=3;
 			M[CSTART]++;
 			M[M[CBACK]] = waiter_id;

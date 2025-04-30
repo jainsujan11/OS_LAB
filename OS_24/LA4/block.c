@@ -6,10 +6,20 @@
 #include <unistd.h>
 #include <string.h>
 
-
+// global variables for storing file descriptors
 int block,bin,bout,rn1,rn2,cn1,cn2;
+// A and B as in assg
 int A[3][3], B[3][3];
 int stdout_copy;
+
+/*
+    General formula used many times to find row and column 
+    cell number = 3*row + column
+
+    By default bout --> stdout
+               bin  --> read from coordinator write end
+*/
+
 void draw_board()
 {
     printf("+---+---+---+\n");
@@ -52,7 +62,8 @@ int check_row_conflict(int rn,int cell,int d)
     stdout_copy = dup(1);
     close(1);
     dup(rn);
-    printf("r %d %d %d\n",i,d,bout);
+    // writing to neighbour block
+    printf("r %d %d %d\n",i,d,bout); // passing extra argument bout as mentioned in assg
     close(1);
     dup(stdout_copy);
     char msg[10];
@@ -61,6 +72,7 @@ int check_row_conflict(int rn,int cell,int d)
     else return 1;
 }
 
+// same as row conflict
 int check_column_conflict(int cn,int cell,int d)
 {
     int j = cell - (cell/3)*3;
@@ -76,7 +88,6 @@ int check_column_conflict(int cn,int cell,int d)
     else return 1;
 }
 
-// by default, 1 -> stdout 
 int main(int argc, char const *argv[])
 {
     block = atoi(argv[1]);
@@ -108,6 +119,7 @@ int main(int argc, char const *argv[])
             int c = s[2] - '0';
             int d = s[4] - '0';
             int flag = 1;
+            // checking all conditions
             if(check_read_only(c)) printf("Readonly cell\n");
             else if(check_block_conflict(d)) printf("Block Conflict\n");
             else if(check_row_conflict(rn1,c,d) || check_row_conflict(rn2,c,d)) printf("Row conflict\n");
@@ -123,9 +135,11 @@ int main(int argc, char const *argv[])
         }
         else if(s[0] == 'r')
         {
-            int row = s[2] - '0';
-            int digit = s[4] - '0';
-            int write = s[6] - '0';
+            // when a block asks for row conflict
+            int row = 0;
+            int digit = 0;
+            int write = 0;
+            sscanf(s,"r %d %d %d",&row,&digit,&write);
             stdout_copy = dup(1);
             close(1);
             dup(write);
@@ -134,6 +148,7 @@ int main(int argc, char const *argv[])
             {
                 if(B[row][col] == digit) flag = 1;
             }
+            // writing to origin block write end
             if(flag) printf("1\n");
             else printf("0\n");
             close(1);
@@ -141,9 +156,11 @@ int main(int argc, char const *argv[])
         }
         else if(s[0] == 'c')
         {
-            int col = s[2] - '0';
-            int digit = s[4] - '0';
-            int write = s[6] - '0';
+            // same logic as row conflict
+            int col = 0;
+            int digit = 0;
+            int write = 0;
+            sscanf(s,"c %d %d %d",&col,&digit,&write);
             stdout_copy = dup(1);
             close(1);
             dup(write);
@@ -160,9 +177,8 @@ int main(int argc, char const *argv[])
         else if(s[0] == 'q'){
             printf("Bye... \n");
             sleep(2);
-            exit(block);
+            exit(0);
         }
     }
     return 0;
 }
-

@@ -4,7 +4,6 @@
 #include <vector> 
 #include <string> 
 #include <fstream>
-#include <cassert>
 using namespace std;
 
 #define NFFMIN 1000
@@ -17,6 +16,7 @@ struct node{
         pid = -1;
     }
 };
+/* Structure for storing FFLIST, NFF */
 struct FFinfo {
     node FFLIST[SIZE];
     int NFF;
@@ -25,7 +25,7 @@ struct FFinfo {
         NFF = SIZE;
         ptr = 0;
     }
-    
+    /* HELPER FUNCTIONS */
     void deallocate(int frame) {
         NFF++;
         ptr--;
@@ -40,6 +40,7 @@ struct FFinfo {
         return fno;
     }
 };
+/* Page Table and functions associated with it */
 struct PCB{
     unsigned short int PT[2048];
     unsigned short int counter[2048];
@@ -66,7 +67,7 @@ struct PCB{
     {
         PT[pg] |= (1<<14);
     }
-    void set_cnt(int pg)
+    void set_cnt(int pg) // set counter to 0xffff 
     {
         counter[pg] = 0xffff;
     }
@@ -98,12 +99,14 @@ vector<PCB> table;
 vector<info> code;
 queue<int> Q;
 int n,m;
-FFinfo FF;
+FFinfo FF; // FFLIST structure
+/* maintained for storing summary info */
 vector<int> access, replacements, faults;
 vector<array<int,4>> attempt;
 
 void init()
 {
+     // kernel data initialisation 
     for (int i = 0; i < SIZE ; i++)
     {
         FF.FFLIST[i].fno = i;
@@ -126,7 +129,7 @@ void init()
     }
     
 }
-
+/* finds victim page for approx LRU */
 int min_history(int cur,unsigned short int& mini)
 {
     mini = 0xffff;
@@ -144,10 +147,9 @@ int min_history(int cur,unsigned short int& mini)
     }
     return page;
 }
-
+/* logic for attemp_1 */
 int attempt_1(int cur,int p)
 {
-    assert(FF.ptr == 11288);
     for (int j = FF.ptr; j < SIZE; j++)
     {
         if(FF.FFLIST[j].pid == cur && FF.FFLIST[j].pno == p)
@@ -161,9 +163,9 @@ int attempt_1(int cur,int p)
     }
     return -1;
 }
+/* logic for attemp_2 */
 int attempt_2(int cur)
 {
-    assert(FF.ptr == 11288);
     for (int j = FF.ptr; j < SIZE; j++)
     {
         if(FF.FFLIST[j].pid == -1 && FF.FFLIST[j].pno == -1)
@@ -177,9 +179,9 @@ int attempt_2(int cur)
     }
     return -1;
 }
+/* logic for attemp_3 */
 int attempt_3(int cur)
 {
-    assert(FF.ptr == 11288);
     for (int j = FF.ptr; j < SIZE; j++)
     {
         if(FF.FFLIST[j].pid == cur)
@@ -197,13 +199,14 @@ void page_fault(int m,int cur)
 {
     if(FF.NFF > NFFMIN)
     {
+        // allocate a free frame from FFLIST 
         int p = table[cur].get_page(m);
         int fno = FF.allocate(p,cur);
         table[cur].set(p,fno);
         table[cur].set_ref(p);
         table[cur].set_cnt(p);
         #ifdef VERBOSE
-            cout << "\tFault on Page" << setw(5) << p << ": Free Frame " << fno << " found\n";
+            cout << "\tFault on Page" << setw(5) << p << ": Free frame " << fno << " found\n";
         #endif
     }
     else if(FF.NFF == NFFMIN)
@@ -218,8 +221,6 @@ void page_fault(int m,int cur)
             cout << "\tFault on Page" << setw(5) << p << ": To replace Page " << q << " at Frame " << g << " [history = " << ans << "]" << endl;
         #endif
         int idx = attempt_1(cur,p);
-        
-        // we have to store q info at this idx 
         if(idx == -1)
         {   
             idx = attempt_2(cur);
@@ -242,14 +243,14 @@ void page_fault(int m,int cur)
         table[cur].set(p,fno);
         table[cur].set_ref(p);
         table[cur].set_cnt(p);
-        // swap the entry
+        // we have to store q info at this idx 
         FF.FFLIST[idx].fno = g;
         FF.FFLIST[idx].pid = cur;
         FF.FFLIST[idx].pno = q;
     }
     
 }
-
+/* shift every counter to right */
 void shift(int cur)
 {
     for (int j = 10; j < 2048; j++)
@@ -287,10 +288,9 @@ void binary_search(int k,int cur)
     }
     shift(cur);
 }
-
+/* when a process finishes all its searches */
 void quit(int cur)
 {
-
     for (int i = 0; i < 2048; i++)
     {
         int x = table[cur].clear(i);
@@ -319,7 +319,7 @@ void simulate()
 }
 int main(int argc, char const *argv[])
 {
-    srand(time(NULL));
+    srand(time(0));
     ifstream file("search.txt");
     if (!file) {
         cerr << "Error opening file\n";
@@ -344,11 +344,11 @@ int main(int argc, char const *argv[])
     init();
     simulate();
     cout << "+++ Page access summary" << endl;
-    cout << setw(8) << "PID"
-        << setw(12) << "Accesses"
-        << setw(13) << "Faults"
-        << setw(20) << "Replacements"
-        << setw(40) << "Attempts" << endl;
+    cout << "\tPID"
+        << setw(13) << "Accesses"
+        << setw(14) << "Faults"
+        << setw(21) << "Replacements"
+        << setw(32) << "Attempts" << endl;
     int total_access = 0, total_faults = 0, total_replacements = 0;
     int total_a = 0, total_b = 0, total_c = 0, total_d = 0;
     for (int i = 0; i < n; i++) {
@@ -360,11 +360,11 @@ int main(int argc, char const *argv[])
         int a = attempt[i][0], b = attempt[i][1], c = attempt[i][2], d = attempt[i][3]; 
         double a_perc = a*1.0/replacement*100, b_perc = b*1.0/replacement*100, c_perc = c*1.0/replacement*100, d_perc = d*1.0/replacement*100; 
 
-        cout << setw(8) << i
-            << setw(10) << accesses
-            << setw(8) << fault << "   (" << fixed << setprecision(2) << fault_percent << "%)"
-            << setw(6) << replacement << "   (" << replacement_percent << "%)"
-            << setw(8) << a << " +"
+        cout << "\t" << left << setw(4) << i
+            << right << setw(10) << accesses
+            << setw(9) << fault << "   (" << fixed << setprecision(2) << fault_percent << "%)"
+            << setw(7) << replacement << "   (" << replacement_percent << "%)"
+            << setw(7) << a << " +"
             << setw(4) << b << " +"
             << setw(4) << c << " +"
             << setw(4) << d << "  ("
@@ -392,15 +392,15 @@ int main(int argc, char const *argv[])
     double total_d_perc = total_d * 100.0 / total_replacements;
 
     // Print total row
-    cout << "\n";
-    cout << setw(8) << "Total"
+    cout << "\n\t";
+    cout << left << setw(10) << "Total"
          << setw(10) << total_access
-         << setw(8) << total_faults << "   (" << fixed << setprecision(2) << total_fault_percent << "%)"
-         << setw(6) << total_replacements << "   (" << total_replacement_percent << "%)"
-         << setw(8) << total_a << " +"
-         << setw(4) << total_b << " +"
-         << setw(5) << total_c << " +"
-         << setw(3) << total_d << "  ("
+         << total_faults << " (" << fixed << setprecision(2) << total_fault_percent << "%)"
+         << "    " << total_replacements << " (" << total_replacement_percent << "%)"
+         << right <<  setw(7) << total_a << " + "
+         << setw(4) << total_b << " + "
+         << setw(5) << total_c << " + "
+         << setw(1) << total_d << "  ("
          << fixed << setprecision(2)
          << total_a_perc << "% + "
          << total_b_perc << "% + "

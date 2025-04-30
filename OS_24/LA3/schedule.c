@@ -176,8 +176,6 @@ void handle(int cur)
         ready_queue = enqueue(ready_queue, cur);
     }
 }
-
-
 void round_robin(int q)
 {
     readfile();

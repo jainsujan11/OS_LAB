@@ -20,14 +20,12 @@ struct sembuf pop, vop ;
 int customer[256], waiter[5], cook, mutex;
 int *M;
 
-
+/* --- HELPER FUNCTIONS --- */
 int get_st(int i) {return 200*i+100;}
 int front(int i) {return 200*i+102;}
 int rear(int i) {return 200*i+103;}
 void print_time(int add)
 {
-    // initial time is 11:00 am, write code to print the time after 'add' minutes
-    // also primt am/pm
     int hr = 11, min = 0;
     min += add;
     hr += min/60;
@@ -55,9 +53,12 @@ char get_wt(int i)
 {
 	return (char)(i+'U');
 }
+
+
 void cmain(int id,int cnt,int arrival)
 {
 	P(mutex);
+	// late arrival condition
 	if(M[0] > 240)
 	{
 		print_time(M[0]);
@@ -65,6 +66,7 @@ void cmain(int id,int cnt,int arrival)
 		V(mutex);
 		exit(0);
 	} 
+	// empty table condition
 	if(M[1] == 0)
 	{
 		print_time(M[0]);
@@ -74,17 +76,19 @@ void cmain(int id,int cnt,int arrival)
 	}
 	print_time(M[0]);
 	printf(" Customer %d arrives (count = %d)\n", id, cnt);
-	assert(M[0] == arrival);
+	assert(M[0] == arrival); // a check statement to ensure everything ok 
 	M[1]--;
 	int assg_wt = M[2];
+	// incrementin waiters in RR fashion
 	M[2] = (M[2]+1)%5;
 	M[get_st(assg_wt)+1]++;
+	// storing waiters in a queue 
 	M[rear(assg_wt)]+=2;
 	M[M[rear(assg_wt)]] = id;
 	M[M[rear(assg_wt)]+1] = cnt;
 	V(mutex);
 	V(waiter[assg_wt]);
-	P(customer[id]);
+	P(customer[id]);// waiting for waiter to take the order 
 	P(mutex);
 	print_time(M[0]);
 	printf("  Customer %d: Order placed to waiter %c\n", id, get_wt(assg_wt));
@@ -140,7 +144,7 @@ int main(int argc, char const *argv[])
 	// read from customer.txt
 	FILE *fp = fopen("customers.txt", "r");
 	int arr[256][3];
-	// storing file in a array, directly not working i dont know why 
+	// storing file in a array 
 	int ptr = 0;
 	while(1)
 	{
@@ -153,7 +157,7 @@ int main(int argc, char const *argv[])
 		ptr++;
 	}
 	fclose(fp);
-	int last_time = -1;
+	int last_time = -1; // denotes arrival time of previous customer
 	int num_customer=0;
 	int i=0;
 	while(i<ptr)
@@ -185,6 +189,10 @@ int main(int argc, char const *argv[])
 			M[0] = arr_time;
 			last_time = arr_time;
 			V(mutex);
+			if (mutex == -1) {
+				perror("semget failed for mutex");
+				exit(1);
+			}
 		}
 		else{
 			V(mutex);

@@ -1,0 +1,37 @@
+dad(Parent) throws balls to kids(child)
+kids catch --> continue
+else remove the kid
+
+the last kid will be the winner 
+
+n processes are created by command line argument by Parent
+
+Parent sends SIGUSR2 to child ki 
+
+catch  = 0.9 probability using rand % 10 send SIGUSR1
+         0.1 ~catch send SIGUSR2
+
+
+maintain status of each child for Parent and the child itself 
+
+
+print the status of children after every throw 
+
+now we have to print the status of child using SIGUSR1 
+
+P -> C1 -> C2 -> C3 -> .... -> Cn
+|
+D
+create a dummy child 
+while(1)
+{
+    pause();
+} 
+
+
+
+// use fflush(stdout)
+
+// maintain process table and store pids pgids status 
+// maintain global variables #active childs, 
+// write handlers for SIGUSR1, SIGUSR2, SIGINT

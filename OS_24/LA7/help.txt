@@ -1,0 +1,61 @@
+m boats and n visitor 
+
+master thread creates 
+--- m boat threads (1,2,3,...,m)
+--- n visitor threads (1,2,3,...,n)
+
+visitor j vtime = 30-120 min scale down like LA6 ###usleep(vtime)
+
+        now V(boat) // signal to boat, i am ready to ride
+            P(rider)
+          rtime = 15-60 min 
+
+boat 
+
+    V(rider)
+    P(boat)
+now assume boat i pairs with rider j 
+
+
+    boat                visitor 
+
+usleep(rtime[j])    usleep(rtime[j])
+
+
+now there are 3 issues 
+
+1) how to deal with semaphores  3) how to pair visitor with boat
+
+solivng issue 1) implement counting semaphores for pthreads, no internal support 
+--- use condition variable queue 
+
+struct semaphore{
+    int value;
+    pthread_mutex_t mtx;
+    pthread_cont_t cv;
+};
+implement P and V operations in 6.6.2
+
+
+solving issue 2) barrier End of Session using barrier
+
+solving issue 3) suppose 2 boats and 2 riders are simultaneously ready
+i1 j1   rtime[1]
+i2 j2   rtime[2]
+
+maintain global array
+boat indexed array
+----
+| BA[i] = T/F
+| BB[i] = a barrier sp to boat i, ## this barrier is initialized to 2 !!!
+| BC[i] = -1 or j
+| BD[i] - rtime[j]
+---- bmtx
+
+so finally 
+lock(bmtx)
+search for i such that BA[i] = true and BC[i] = -1;
+if(i found){BC[i] = j,BD[i] = rtime[j]}
+unlock(bmtx)
+
+join(BB[i])  ## the same barrier

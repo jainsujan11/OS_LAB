@@ -1,0 +1,4 @@
+simulate find command to locate a given extension file and subdirectory 
+
+use opendir to get a pointer to a structure which 
+contains information about directory which stores file name and file size 

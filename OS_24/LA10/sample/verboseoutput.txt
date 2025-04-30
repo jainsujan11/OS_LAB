@@ -1,5 +1,3 @@
-gcc -Wall -DVERBOSE -o runsearch LRU.c
-./runsearch
 +++ Process 0: Search 1
     Fault on Page  928: Free frame 1280 found
     Fault on Page  469: Free frame 1281 found

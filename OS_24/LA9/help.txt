@@ -1,0 +1,23 @@
+there are 10 pages which are essential which are loaded when process is loaded 
+
+also there is data part which is a array of size of [1e6,2e6], which is not loaded immediately 
+task of process is to search an element in a array, 
+frame size = page size = 4Kb 
+
+logical address and physical address part 
+
+we will be given n number of processes and m number of entries that we have to search 
+we will maintain a swap space which stores something 
+also when a process terminates we can free space in frames 
+
+3 DS
+1) for each process maintain a page table atmost 2048 pages, 10 pages are essential 
+2) swap space, a list of processes 
+3) Free frame list, which indicates 
+4) Ready queue Q, which simulates RR schedulating with time quanta 
+
+total number of frames 64Mb/4Kb = 2^14
+each entry of page table stores 15 bits make it 16 {14 for frame + 1 valid/invalid}
+ 
+
+we have to find number of swap outs, page faults 

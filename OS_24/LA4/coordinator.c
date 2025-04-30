@@ -7,11 +7,19 @@
 #include <string.h>
 #include "boardgen.c"
 
+// global 9 pipe 
 int block[9][2];
+// storing child PIDs 
 pid_t cpid[9];
 int stdout_copy;
-
+// A and S as in assg
 int A[9][9], S[9][9];
+
+/*
+    Reading only occurs from stdin so closed all read ends of pipes for coordinator
+    By default, coordinator writes to stdout but we change when required
+*/
+
 void draw_board()
 {
     printf("\t+---+---+---+\n");
@@ -118,6 +126,7 @@ void quit()
     stdout_copy = dup(1);
     for (int i = 0; i < 9; i++)
     {
+        // passing to all childs
         close(1);
         dup(block[i][1]);
         printf("q\n");
@@ -130,6 +139,7 @@ void quit()
 void send_board(int A[9][9])
 {
     stdout_copy = dup(1);
+    // passing 9 integers of a block
     for (int i = 0; i < 9; i++)
     {
         close(1);
@@ -159,6 +169,7 @@ int check(int b,int c,int d)
 
 void place(int b,int c,int d)
 {
+    // placing a digit by coordinator 
     stdout_copy = dup(1);
     close(1);
     dup(block[b][1]);
@@ -171,19 +182,21 @@ int main(int argc, char const *argv[])
 {
     for (int i = 0; i < 9; i++)
     {
+        // making pipes 
         pipe(block[i]);
     }
     help_message();
     fork_child();
     for (int i = 0; i < 9; i++)
     {
-        close(block[i][0]); // coordinator reads only from stdin 
+        close(block[i][0]); // coordinator reads only from stdin so no need for them 
     }
     while(1)
     {
         printf("Fooduko> ");
         char s[100];
         scanf(" %[^\n]s", s);
+        // doing as per instructions 
         if(s[0] == 'n'){
             newboard(A, S);
             send_board(A);
